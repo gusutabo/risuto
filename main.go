@@ -1,62 +1,62 @@
 package main
 
 import (
-    "encoding/json"
-    "net/http"
+	"encoding/json"
+	"net/http"
 
-    "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
-type Word struct {
-    ID       string        `json:"id,omitempty"`
-    Word     string        `json:"word,omitempty"`
-    Meaning  string        `json:"meaning,omitempty"`
+type Words struct {
+	ID      string `string:"id,omitempty"`
+	Word    string `string:"word,omitempty"`
+	Meaning string `string:"meaning,omitempty"`
+	Status  string `string:"status,omitempty"`
 }
 
-var word []Word
+var words []Words
 
-func getWord(w http.ResponseWriter, r *http.Request) {
-    params := mux.Vars(r)
-
-    for _, item := range word {
-        if item.ID == params["id"] {
-            json.NewEncoder(w).Encode(item)
-            return
-        }
-    }
-
-    json.NewEncoder(w).Encode(word)
+func GetWords(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(words)
 }
 
-func createWord(w http.ResponseWriter, r *http.Request) {
-    params := mux.Vars(r)
-    var new_word Word
-    _ = json.NewDecoder(r.Body).Decode(&new_word)
-    new_word.ID = params["id"]
-    word = append(word, new_word)
+func GetWord(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 
-    json.NewEncoder(w).Encode(word)
+	for _, item := range words {
+		if item.ID == params["id"] {
+			json.NewEncoder(w).Encode(item)
+			return
+		}
+	}
 }
 
-func delWord(w http.ResponseWriter, r *http.Request) {
-    params := mux.Vars(r)
+func CreateWord(w http.ResponseWriter, r *http.Request) {
+	var word Words
+	_ = json.NewDecoder(r.Body).Decode(&word)
+	words = append(words, word)
+	json.NewEncoder(w).Encode(words)
+}
 
-    for index, item := range word {
-        if item.ID == params["id"] {
-            word = append(word[:index], word[index+1:]...)
-            break
-        }
-        json.NewEncoder(w).Encode(word)
-    }
+func DeleteWord(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	for index, item := range words {
+		if item.ID == params["id"] {
+			words = append(words[:index], words[index+1:]...)
+			break
+		}
+		json.NewEncoder(w).Encode(words)
+	}
 }
 
 func main() {
-    router := mux.NewRouter()
+	router := mux.NewRouter()
 
-    router.HandleFunc("/words", getWord).Methods("GET")
-    router.HandleFunc("/words/{id}", getWord).Methods("GET")
-    router.HandleFunc("/words/{id}", createWord).Methods("POST")
-    router.HandleFunc("/words/{id}", delWord).Methods("DELETE")
+	router.HandleFunc("/", GetWords).Methods("GET")
+	router.HandleFunc("/{id}", GetWord).Methods("GET")
+	router.HandleFunc("/word", CreateWord).Methods("POST")
+	router.HandleFunc("/word/{id}", DeleteWord).Methods("DELETE")
 
-    http.ListenAndServe(":8000", router)
+	http.ListenAndServe(":8000", router)
 }
